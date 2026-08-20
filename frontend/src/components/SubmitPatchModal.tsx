@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useState } from "react";
-import { X, Send, Cpu, Brain, CheckCircle2, XCircle, Zap, ShieldCheck } from "lucide-react";
-import { Bounty } from "../lib/genlayer";
+import { X, Send, Cpu, Brain, CheckCircle2, XCircle, Zap } from "lucide-react";
+import { Bounty, submitAndEvaluatePatchOnChain } from "../lib/genlayer";
 
 interface SubmitPatchModalProps {
   bounty: Bounty | null;
@@ -79,49 +79,69 @@ contract VaultEscrow {
 
     setIsAuditing(true);
 
-    // Simulate multi-step GenLayer Validator AI Consensus Execution
-    setAuditStep("Step 1/3: Broadcasting Patch to GenLayer Validators...");
-    await new Promise((res) => setTimeout(res, 1200));
+    try {
+      if (account && typeof window !== "undefined" && window.ethereum) {
+        setAuditStep("Step 1/3: Prompting MetaMask for On-Chain Patch Transaction Approval...");
+        const result = await submitAndEvaluatePatchOnChain(bounty.id, patchCode, prUrl, account);
 
-    setAuditStep("Step 2/3: Executing On-Chain LLM Prompt (gl.exec_prompt)...");
-    await new Promise((res) => setTimeout(res, 2000));
+        setAuditStep("Step 2/3: Executing On-Chain LLM Prompt (gl.exec_prompt) across GenLayer Validators...");
+        await new Promise((res) => setTimeout(res, 2000));
 
-    setAuditStep("Step 3/3: Reaching Validator Consensus & Verifying Security Criteria...");
-    await new Promise((res) => setTimeout(res, 1500));
+        setAuditStep(`Step 3/3: Reaching Consensus! Tx: ${result.txHash.slice(0, 12)}...`);
+        await new Promise((res) => setTimeout(res, 1500));
 
-    // Determine validity based on patch content heuristics
-    const codeLower = patchCode.toLowerCase();
-    const isSuccess =
-      codeLower.includes("modifier") ||
-      codeLower.includes("reentrancyguard") ||
-      codeLower.includes("nonreentrant") ||
-      codeLower.includes("safemath") ||
-      codeLower.includes("math.");
+        const isSuccess = result.evalResult.is_valid;
+        const updatedBounty: Bounty = {
+          ...bounty,
+          status: isSuccess ? 1 : 0,
+          winner: isSuccess ? account : bounty.winner,
+          ai_verdict_reason: result.evalResult.reason,
+          patch_pr_url: prUrl,
+        };
 
-    let verdictReason = "";
-    let newStatus: 0 | 1 | 2 = 0;
+        onPatchEvaluated(bounty.id, updatedBounty);
+      } else {
+        // Fallback simulation when wallet not connected
+        setAuditStep("Step 1/3: Broadcasting Patch to GenLayer Validators...");
+        await new Promise((res) => setTimeout(res, 1200));
 
-    if (isSuccess) {
-      newStatus = 1; // RESOLVED
-      verdictReason = `VALIDATOR CONSENSUS PASSED: The submitted security patch eliminates the vulnerability by introducing proper guards/access checks. Acceptance criteria met. Escrow of ${bounty.reward_amount} GEN disbursed to Security Hunter.`;
-    } else {
-      newStatus = 0; // Remains Open with rejected feedback
-      verdictReason = `VALIDATOR CONSENSUS REJECTED: The submitted diff lacks explicit security guards or access control checks matching acceptance criteria. Security flaw remains active. Please update your patch.`;
+        setAuditStep("Step 2/3: Executing On-Chain LLM Prompt (gl.exec_prompt)...");
+        await new Promise((res) => setTimeout(res, 2000));
+
+        setAuditStep("Step 3/3: Reaching Validator Consensus & Verifying Security Criteria...");
+        await new Promise((res) => setTimeout(res, 1500));
+
+        const codeLower = patchCode.toLowerCase();
+        const isSuccess =
+          codeLower.includes("modifier") ||
+          codeLower.includes("reentrancyguard") ||
+          codeLower.includes("nonreentrant") ||
+          codeLower.includes("safemath");
+
+        const verdictReason = isSuccess
+          ? `VALIDATOR CONSENSUS PASSED: The submitted security patch eliminates the vulnerability by introducing proper guards/access checks. Acceptance criteria met. Escrow of ${bounty.reward_amount} GEN disbursed.`
+          : `VALIDATOR CONSENSUS REJECTED: The submitted diff lacks explicit security guards or access control checks matching acceptance criteria. Security flaw remains active.`;
+
+        const updatedBounty: Bounty = {
+          ...bounty,
+          status: isSuccess ? 1 : 0,
+          winner: isSuccess ? account || "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC" : bounty.winner,
+          ai_verdict_reason: verdictReason,
+          patch_pr_url: prUrl,
+        };
+
+        onPatchEvaluated(bounty.id, updatedBounty);
+      }
+
+      onClose();
+      setPatchCode("");
+      setPrUrl("");
+    } catch (err: any) {
+      console.error("Error submitting patch:", err);
+      alert(`Transaction failed or rejected: ${err.message || err}`);
+    } finally {
+      setIsAuditing(false);
     }
-
-    const updatedBounty: Bounty = {
-      ...bounty,
-      status: newStatus,
-      winner: isSuccess ? account || "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC" : bounty.winner,
-      ai_verdict_reason: verdictReason,
-      patch_pr_url: prUrl,
-    };
-
-    setIsAuditing(false);
-    onPatchEvaluated(bounty.id, updatedBounty);
-    onClose();
-    setPatchCode("");
-    setPrUrl("");
   };
 
   return (
@@ -237,7 +257,7 @@ contract VaultEscrow {
                 className="px-5 py-2.5 rounded-xl text-xs font-bold bg-gradient-to-r from-cyan-500 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 text-slate-950 font-sans shadow-lg shadow-cyan-500/20 transition-all flex items-center"
               >
                 <Cpu className="w-4 h-4 mr-1.5" />
-                Submit & Trigger AI Consensus Audit
+                Submit & Trigger On-Chain AI Audit
               </button>
             </div>
           </form>

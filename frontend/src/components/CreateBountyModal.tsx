@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { X, Sparkles, AlertCircle, Zap } from "lucide-react";
-import { Bounty } from "../lib/genlayer";
+import { Bounty, createBountyOnChain } from "../lib/genlayer";
 
 interface CreateBountyModalProps {
   isOpen: boolean;
@@ -23,6 +23,7 @@ export const CreateBountyModal: React.FC<CreateBountyModalProps> = ({
   const [expectedFixCriteria, setExpectedFixCriteria] = useState("");
   const [rewardAmount, setRewardAmount] = useState("3.5");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [txNotice, setTxNotice] = useState<string | null>(null);
 
   if (!isOpen) return null;
 
@@ -36,7 +37,7 @@ export const CreateBountyModal: React.FC<CreateBountyModalProps> = ({
     setExpectedFixCriteria(
       "Replace spot price query with Chainlink TWAP Oracle or Pyth Network multi-block price feed validator."
     );
-    setRewardAmount("5.0");
+    setRewardAmount("3.5");
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -47,25 +48,41 @@ export const CreateBountyModal: React.FC<CreateBountyModalProps> = ({
     }
 
     setIsSubmitting(true);
+    setTxNotice(null);
 
     try {
-      const createdBounty: Bounty = {
-        id: Date.now(),
-        creator: account || "0x71C7656EC7ab88b098defB751B7401B5f6d8976F",
-        title,
-        target_repo_url: targetRepoUrl,
-        vulnerability_description: vulnerabilityDescription,
-        expected_fix_criteria: expectedFixCriteria,
-        reward_amount: rewardAmount || "1.0",
-        status: 0, // OPEN
-        winner: "",
-        ai_verdict_reason: "",
-        patch_pr_url: "",
-      };
+      if (account && typeof window !== "undefined" && window.ethereum) {
+        setTxNotice("Prompting MetaMask for real on-chain transaction approval...");
+        const result = await createBountyOnChain(
+          title,
+          targetRepoUrl,
+          vulnerabilityDescription,
+          expectedFixCriteria,
+          rewardAmount,
+          account
+        );
+        setTxNotice(`On-chain transaction sent! Hash: ${result.txHash.slice(0, 12)}...`);
+        await new Promise((res) => setTimeout(res, 1000));
+        onBountyCreated(result.bounty);
+      } else {
+        // Fallback preview mode when wallet disconnected
+        const createdBounty: Bounty = {
+          id: Date.now(),
+          creator: account || "0x71C7656EC7ab88b098defB751B7401B5f6d8976F",
+          title,
+          target_repo_url: targetRepoUrl,
+          vulnerability_description: vulnerabilityDescription,
+          expected_fix_criteria: expectedFixCriteria,
+          reward_amount: rewardAmount || "1.0",
+          status: 0,
+          winner: "",
+          ai_verdict_reason: "",
+          patch_pr_url: "",
+        };
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+        onBountyCreated(createdBounty);
+      }
 
-      await new Promise((resolve) => setTimeout(resolve, 1200));
-
-      onBountyCreated(createdBounty);
       onClose();
       // Reset form
       setTitle("");
@@ -73,11 +90,12 @@ export const CreateBountyModal: React.FC<CreateBountyModalProps> = ({
       setVulnerabilityDescription("");
       setExpectedFixCriteria("");
       setRewardAmount("3.5");
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error creating bounty:", err);
-      alert("Failed to create bounty.");
+      alert(`Transaction failed or rejected: ${err.message || err}`);
     } finally {
       setIsSubmitting(false);
+      setTxNotice(null);
     }
   };
 
@@ -122,10 +140,22 @@ export const CreateBountyModal: React.FC<CreateBountyModalProps> = ({
           </button>
         </div>
 
-        {!account && (
+        {!account ? (
           <div className="mb-4 p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl text-xs text-amber-300 flex items-center">
             <AlertCircle className="w-4 h-4 mr-2 flex-shrink-0" />
-            Wallet not connected. Submitting will use active demo test address.
+            Wallet not connected. Connect Web3 wallet at top right for real on-chain transaction execution!
+          </div>
+        ) : (
+          <div className="mb-4 p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-xs text-emerald-300 flex items-center">
+            <Sparkles className="w-4 h-4 mr-2 flex-shrink-0 text-emerald-400" />
+            Connected ({account.slice(0, 6)}...). Real on-chain transaction will be sent to GenLayer Testnet.
+          </div>
+        )}
+
+        {txNotice && (
+          <div className="mb-4 p-3 bg-cyan-500/20 border border-cyan-500/30 rounded-xl text-xs text-cyan-200 font-mono flex items-center">
+            <div className="w-3 h-3 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin mr-2" />
+            {txNotice}
           </div>
         )}
 
@@ -217,7 +247,7 @@ export const CreateBountyModal: React.FC<CreateBountyModalProps> = ({
               {isSubmitting ? (
                 <>
                   <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-                  Locking Escrow on GenLayer...
+                  Locking Escrow On-Chain...
                 </>
               ) : (
                 "Lock Escrow & Create Bounty"
