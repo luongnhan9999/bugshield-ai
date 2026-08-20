@@ -12,20 +12,6 @@ class SubmissionLog:
     ai_verdict_reason: str
     timestamp: u256
 
-    def __init__(
-        self,
-        hunter: Address,
-        patch_pr_url: str,
-        is_valid: bool,
-        ai_verdict_reason: str,
-        timestamp: u256
-    ):
-        self.hunter = hunter
-        self.patch_pr_url = patch_pr_url
-        self.is_valid = is_valid
-        self.ai_verdict_reason = ai_verdict_reason
-        self.timestamp = timestamp
-
     def to_dict(self) -> dict:
         return {
             "hunter": str(self.hunter),
@@ -51,36 +37,6 @@ class BountyData:
     patch_pr_url: str
     created_at: u256
     submission_count: u256
-
-    def __init__(
-        self,
-        id: u256,
-        creator: Address,
-        title: str,
-        target_repo_url: str,
-        vulnerability_description: str,
-        expected_fix_criteria: str,
-        reward_amount: u256,
-        status: u256,
-        winner: Address,
-        ai_verdict_reason: str,
-        patch_pr_url: str,
-        created_at: u256,
-        submission_count: u256
-    ):
-        self.id = id
-        self.creator = creator
-        self.title = title
-        self.target_repo_url = target_repo_url
-        self.vulnerability_description = vulnerability_description
-        self.expected_fix_criteria = expected_fix_criteria
-        self.reward_amount = reward_amount
-        self.status = status
-        self.winner = winner
-        self.ai_verdict_reason = ai_verdict_reason
-        self.patch_pr_url = patch_pr_url
-        self.created_at = created_at
-        self.submission_count = submission_count
 
     def to_dict(self) -> dict:
         return {
