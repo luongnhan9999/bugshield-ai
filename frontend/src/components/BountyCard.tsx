@@ -14,17 +14,28 @@ import {
   Award,
   Send,
   Lock,
+  Crown,
+  UserCheck,
 } from "lucide-react";
 
 interface BountyCardProps {
   bounty: Bounty;
   onOpenSubmitModal: (bounty: Bounty) => void;
+  currentAccount?: string | null;
 }
 
-export const BountyCard: React.FC<BountyCardProps> = ({ bounty, onOpenSubmitModal }) => {
+export const BountyCard: React.FC<BountyCardProps> = ({
+  bounty,
+  onOpenSubmitModal,
+  currentAccount,
+}) => {
   const [showAiReasoning, setShowAiReasoning] = useState<boolean>(
     bounty.status === 1 || Boolean(bounty.ai_verdict_reason)
   );
+
+  const isCreator =
+    Boolean(currentAccount) &&
+    currentAccount?.toLowerCase() === bounty.creator.toLowerCase();
 
   const getStatusBadge = () => {
     switch (bounty.status) {
@@ -53,7 +64,7 @@ export const BountyCard: React.FC<BountyCardProps> = ({ bounty, onOpenSubmitModa
   };
 
   return (
-    <div className="bg-card border border-border rounded-2xl p-6 shadow-xl hover:border-indigo-500/40 transition-all duration-300 flex flex-col justify-between group">
+    <div className="bg-card border border-border rounded-2xl p-6 shadow-xl hover:border-indigo-500/40 transition-all duration-300 flex flex-col justify-between group relative">
       <div>
         {/* Header line: Title & Status */}
         <div className="flex items-start justify-between gap-4 mb-3">
@@ -62,6 +73,14 @@ export const BountyCard: React.FC<BountyCardProps> = ({ bounty, onOpenSubmitModa
           </h3>
           {getStatusBadge()}
         </div>
+
+        {/* Creator Role Distinction Badge */}
+        {isCreator && (
+          <div className="mb-3 inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-500/10 text-amber-300 border border-amber-500/30">
+            <Crown className="w-3.5 h-3.5 mr-1 text-amber-400" />
+            Created by You (Escrow Lock Account)
+          </div>
+        )}
 
         {/* Target Repo Link */}
         <div className="mb-4">
@@ -126,8 +145,8 @@ export const BountyCard: React.FC<BountyCardProps> = ({ bounty, onOpenSubmitModa
                 </p>
                 {bounty.winner && (
                   <div className="flex items-center text-emerald-400 font-semibold pt-1 text-[11px]">
-                    <CheckCircle2 className="w-3.5 h-3.5 mr-1" />
-                    Winner Payout Address: {bounty.winner}
+                    <UserCheck className="w-3.5 h-3.5 mr-1" />
+                    Winner Hunter Address: {bounty.winner}
                   </div>
                 )}
                 {bounty.patch_pr_url && (
@@ -148,20 +167,30 @@ export const BountyCard: React.FC<BountyCardProps> = ({ bounty, onOpenSubmitModa
         )}
       </div>
 
-      {/* Action Footer */}
-      <div className="pt-2 border-t border-border/40 flex items-center justify-between">
+      {/* Action Footer with Role Permission Check */}
+      <div className="pt-3 border-t border-border/40 flex items-center justify-between">
         <div className="text-[11px] text-slate-500">
           Creator: {bounty.creator.slice(0, 6)}...{bounty.creator.slice(-4)}
         </div>
 
         {bounty.status === 0 ? (
-          <button
-            onClick={() => onOpenSubmitModal(bounty)}
-            className="inline-flex items-center px-4 py-2 rounded-xl text-xs font-bold bg-cyan-500 hover:bg-cyan-400 text-slate-950 transition-all shadow-md shadow-cyan-500/20 transform hover:-translate-y-0.5"
-          >
-            <Send className="w-3.5 h-3.5 mr-1.5" />
-            Submit Security Patch
-          </button>
+          isCreator ? (
+            <span
+              title="You created this bounty. Security Hunter role required to submit patch."
+              className="inline-flex items-center px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-900 text-amber-400/80 border border-amber-500/30 cursor-not-allowed"
+            >
+              <Lock className="w-3.5 h-3.5 mr-1" />
+              Creator (Self-Patch Restricted)
+            </span>
+          ) : (
+            <button
+              onClick={() => onOpenSubmitModal(bounty)}
+              className="inline-flex items-center px-4 py-2 rounded-xl text-xs font-bold bg-cyan-500 hover:bg-cyan-400 text-slate-950 transition-all shadow-md shadow-cyan-500/20 transform hover:-translate-y-0.5"
+            >
+              <Send className="w-3.5 h-3.5 mr-1.5" />
+              Submit Security Patch
+            </button>
+          )
         ) : (
           <span className="inline-flex items-center text-xs text-slate-500 font-medium">
             <Lock className="w-3.5 h-3.5 mr-1 text-slate-500" />

@@ -7,7 +7,7 @@ import { BountyCard } from "../components/BountyCard";
 import { CreateBountyModal } from "../components/CreateBountyModal";
 import { SubmitPatchModal } from "../components/SubmitPatchModal";
 import { Bounty, INITIAL_BOUNTIES, getBountiesFromRPC } from "../lib/genlayer";
-import { Search, Shield, Cpu, ExternalLink, Sparkles } from "lucide-react";
+import { Search, Shield, Cpu, ExternalLink, Sparkles, Crown, UserCheck, Zap } from "lucide-react";
 
 export default function Home() {
   const [account, setAccount] = useState<string | null>(null);
@@ -90,7 +90,7 @@ export default function Home() {
       {/* 2. Main Content Area (Body) */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Hero Banner Section */}
-        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-indigo-950/80 via-slate-900 to-purple-950/80 border border-indigo-500/20 p-8 mb-10 shadow-2xl">
+        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-indigo-950/80 via-slate-900 to-purple-950/80 border border-indigo-500/20 p-8 mb-6 shadow-2xl">
           <div className="relative z-10 max-w-3xl">
             <div className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 mb-4">
               <Sparkles className="w-3.5 h-3.5 mr-1 text-indigo-400" />
@@ -124,6 +124,36 @@ export default function Home() {
                 Docs <ExternalLink className="w-3 h-3 ml-1" />
               </a>
             </div>
+          </div>
+        </div>
+
+        {/* Roles & Judge Fast-Testing Guide Banner */}
+        <div className="mb-8 p-4 bg-slate-900/90 border border-border rounded-2xl flex flex-col md:flex-row items-center justify-between gap-4 text-xs">
+          <div className="flex items-center space-x-3">
+            <div className="p-2 bg-amber-500/10 text-amber-400 rounded-xl border border-amber-500/20">
+              <Crown className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="font-bold text-white text-sm flex items-center gap-2">
+                <span>Phân quyền On-Chain:</span>
+                <span className="text-amber-300 font-normal">👑 Bounty Creator (Ký quỹ)</span>
+                <span>vs</span>
+                <span className="text-cyan-400 font-normal">⚔️ Security Hunter (Nộp Patch)</span>
+              </div>
+              <p className="text-slate-400 text-xs mt-0.5">
+                Người tạo bounty khóa tiền thưởng ký quỹ. Thợ săn tiền thưởng nộp bản vá để Validator AI duyệt tự động.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center space-x-2 shrink-0">
+            <button
+              onClick={() => setIsCreateModalOpen(true)}
+              className="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl flex items-center transition-all shadow"
+            >
+              <Zap className="w-3.5 h-3.5 mr-1 text-amber-300 fill-current" />
+              Test Tạo Bounty (Ký Quỹ)
+            </button>
           </div>
         </div>
 
@@ -167,6 +197,7 @@ export default function Home() {
                 key={bounty.id}
                 bounty={bounty}
                 onOpenSubmitModal={handleOpenSubmitModal}
+                currentAccount={account}
               />
             ))}
           </div>

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { X, Sparkles, AlertCircle } from "lucide-react";
+import { X, Sparkles, AlertCircle, Zap } from "lucide-react";
 import { Bounty } from "../lib/genlayer";
 
 interface CreateBountyModalProps {
@@ -21,10 +21,23 @@ export const CreateBountyModal: React.FC<CreateBountyModalProps> = ({
   const [targetRepoUrl, setTargetRepoUrl] = useState("");
   const [vulnerabilityDescription, setVulnerabilityDescription] = useState("");
   const [expectedFixCriteria, setExpectedFixCriteria] = useState("");
-  const [rewardAmount, setRewardAmount] = useState("1.0");
+  const [rewardAmount, setRewardAmount] = useState("3.5");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   if (!isOpen) return null;
+
+  // Quick Demo Auto-Fill for Judges / Evaluators
+  const handleQuickFillDemo = () => {
+    setTitle("Flash Loan Oracle Price Manipulation in Lending Pool");
+    setTargetRepoUrl("https://github.com/bugshield-ai/lending-protocol-v2");
+    setVulnerabilityDescription(
+      "The calculateCollateralValue() function relies on single-block spot price from UniswapV2 pair, enabling flash loan attackers to artificially manipulate price ratios and execute bad debt liquidations."
+    );
+    setExpectedFixCriteria(
+      "Replace spot price query with Chainlink TWAP Oracle or Pyth Network multi-block price feed validator."
+    );
+    setRewardAmount("5.0");
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,7 +49,6 @@ export const CreateBountyModal: React.FC<CreateBountyModalProps> = ({
     setIsSubmitting(true);
 
     try {
-      // Create new bounty object
       const createdBounty: Bounty = {
         id: Date.now(),
         creator: account || "0x71C7656EC7ab88b098defB751B7401B5f6d8976F",
@@ -51,7 +63,6 @@ export const CreateBountyModal: React.FC<CreateBountyModalProps> = ({
         patch_pr_url: "",
       };
 
-      // Simulate on-chain call latency
       await new Promise((resolve) => setTimeout(resolve, 1200));
 
       onBountyCreated(createdBounty);
@@ -61,7 +72,7 @@ export const CreateBountyModal: React.FC<CreateBountyModalProps> = ({
       setTargetRepoUrl("");
       setVulnerabilityDescription("");
       setExpectedFixCriteria("");
-      setRewardAmount("1.0");
+      setRewardAmount("3.5");
     } catch (err) {
       console.error("Error creating bounty:", err);
       alert("Failed to create bounty.");
@@ -82,16 +93,33 @@ export const CreateBountyModal: React.FC<CreateBountyModalProps> = ({
         </button>
 
         {/* Modal Header */}
-        <div className="flex items-center space-x-3 mb-6">
-          <div className="p-2 bg-indigo-500/10 text-indigo-400 rounded-xl border border-indigo-500/20">
-            <Sparkles className="w-6 h-6" />
+        <div className="flex items-center justify-between mb-4 pr-6">
+          <div className="flex items-center space-x-3">
+            <div className="p-2 bg-indigo-500/10 text-indigo-400 rounded-xl border border-indigo-500/20">
+              <Sparkles className="w-6 h-6" />
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-white">Create Security Bug Bounty</h2>
+              <p className="text-xs text-slate-400">
+                Escrow funds as <span className="text-indigo-300 font-semibold">👑 Bounty Creator</span>
+              </p>
+            </div>
           </div>
-          <div>
-            <h2 className="text-xl font-bold text-white">Create Security Bug Bounty</h2>
-            <p className="text-xs text-slate-400">
-              Escrow funds on GenLayer Testnet & trigger AI consensus auditing.
-            </p>
+        </div>
+
+        {/* Quick Demo Pre-fill Button for Judges */}
+        <div className="mb-4 p-3 bg-indigo-950/40 border border-indigo-500/30 rounded-xl flex items-center justify-between">
+          <div className="text-xs text-indigo-200">
+            <span className="font-bold text-indigo-300">👑 Judge Fast-Test Mode:</span> Auto-fill sample vulnerability details
           </div>
+          <button
+            type="button"
+            onClick={handleQuickFillDemo}
+            className="px-3 py-1.5 bg-gradient-to-r from-amber-500 to-indigo-600 hover:from-amber-400 hover:to-indigo-500 text-slate-950 font-bold text-xs rounded-lg shadow flex items-center transition-all"
+          >
+            <Zap className="w-3.5 h-3.5 mr-1 text-slate-950 fill-current" />
+            Auto-Fill Demo
+          </button>
         </div>
 
         {!account && (
