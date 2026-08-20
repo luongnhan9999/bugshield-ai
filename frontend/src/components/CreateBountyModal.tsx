@@ -160,7 +160,7 @@ export const CreateBountyModal: React.FC<CreateBountyModalProps> = ({
 
           <div>
             <label className="block text-xs font-semibold text-slate-300 mb-1">
-              Escrow Reward Amount (GEN / ETH) *
+              Escrow Reward Amount (GEN) *
             </label>
             <input
               type="number"
