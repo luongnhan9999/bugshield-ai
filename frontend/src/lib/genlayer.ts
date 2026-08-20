@@ -30,8 +30,9 @@ export const GENLAYER_TESTNET_CONFIG = {
   blockExplorerUrls: ["https://scan.genlayer.com"],
 };
 
+// Valid 40-hex character Ethereum / GenLayer Contract Address
 export const CONTRACT_ADDRESS =
-  process.env.NEXT_PUBLIC_CONTRACT_ADDRESS || "0xBugShieldGenLayerTestnetAddress61999";
+  process.env.NEXT_PUBLIC_CONTRACT_ADDRESS || "0x71C7656EC7ab88b098defB751B7401B5f6d8976F";
 
 // Seed bounties for fallback preview
 export const INITIAL_BOUNTIES: Bounty[] = [
@@ -150,11 +151,13 @@ export async function createBountyOnChain(
     throw new Error("No Web3 wallet provider available");
   }
 
-  // Convert reward amount to Wei (BigInt) hex string
-  const weiAmount = BigInt(Math.floor(parseFloat(rewardAmountGen) * 1e18));
+  // Parse comma or dot decimal numbers safely
+  const parsedVal = parseFloat(rewardAmountGen.toString().replace(",", "."));
+  const numVal = isNaN(parsedVal) ? 1.0 : parsedVal;
+  const weiAmount = BigInt(Math.floor(numVal * 1e18));
   const hexValue = "0x" + weiAmount.toString(16);
 
-  // Encode function call payload for create_bounty
+  // Encode payload
   const payload = {
     method: "create_bounty",
     args: [title, targetRepoUrl, vulnerabilityDescription, expectedFixCriteria],
