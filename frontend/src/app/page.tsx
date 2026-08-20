@@ -135,13 +135,13 @@ export default function Home() {
             </div>
             <div>
               <div className="font-bold text-white text-sm flex items-center gap-2">
-                <span>Phân quyền On-Chain:</span>
-                <span className="text-amber-300 font-normal">👑 Bounty Creator (Ký quỹ)</span>
+                <span>On-Chain Role Delegation:</span>
+                <span className="text-amber-300 font-normal">👑 Bounty Creator (Escrow Lock)</span>
                 <span>vs</span>
-                <span className="text-cyan-400 font-normal">⚔️ Security Hunter (Nộp Patch)</span>
+                <span className="text-cyan-400 font-normal">⚔️ Security Hunter (Patch Auditor)</span>
               </div>
               <p className="text-slate-400 text-xs mt-0.5">
-                Người tạo bounty khóa tiền thưởng ký quỹ. Thợ săn tiền thưởng nộp bản vá để Validator AI duyệt tự động.
+                Bounty Creators lock escrow rewards. Security Hunters submit patch diffs for automated Validator AI audit.
               </p>
             </div>
           </div>
@@ -152,7 +152,7 @@ export default function Home() {
               className="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl flex items-center transition-all shadow"
             >
               <Zap className="w-3.5 h-3.5 mr-1 text-amber-300 fill-current" />
-              Test Tạo Bounty (Ký Quỹ)
+              Create Bounty (Escrow Lock)
             </button>
           </div>
         </div>

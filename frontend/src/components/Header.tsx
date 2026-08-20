@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useEffect } from "react";
-import { ShieldCheck, Cpu, Wallet, LogOut, Sparkles, CheckCircle, ExternalLink } from "lucide-react";
-import { connectWallet, getConnectedAccount, GENLAYER_TESTNET_CONFIG } from "../lib/genlayer";
+import { ShieldCheck, Cpu, Wallet, LogOut, Sparkles, CheckCircle } from "lucide-react";
+import { connectWallet, getConnectedAccount } from "../lib/genlayer";
 
 interface HeaderProps {
   account: string | null;
@@ -17,7 +17,6 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenCreateModal,
   bountyStats,
 }) => {
-
   // Auto-detect existing wallet session & listen for account changes
   useEffect(() => {
     async function checkSession() {
@@ -96,11 +95,11 @@ export const Header: React.FC<HeaderProps> = ({
                 </div>
                 <button
                   onClick={handleDisconnect}
-                  title="Disconnect Wallet / Đăng xuất ví"
+                  title="Disconnect Wallet"
                   className="inline-flex items-center px-3 py-2 rounded-xl text-xs font-semibold border border-rose-500/30 bg-rose-950/30 text-rose-400 hover:bg-rose-900/50 hover:text-white transition-all shadow-inner"
                 >
                   <LogOut className="w-3.5 h-3.5 mr-1" />
-                  Đăng xuất
+                  Disconnect
                 </button>
               </div>
             ) : (
@@ -109,7 +108,7 @@ export const Header: React.FC<HeaderProps> = ({
                 className="inline-flex items-center px-4 py-2.5 rounded-xl font-semibold text-sm border border-cyan-500/40 bg-slate-900/90 hover:bg-cyan-950/40 text-cyan-300 hover:text-cyan-200 transition-all shadow-inner"
               >
                 <Wallet className="w-4 h-4 mr-2 text-cyan-400" />
-                Kết nối ví Web3
+                Connect Web3 Wallet
               </button>
             )}
           </div>
