@@ -2,11 +2,12 @@
 
 import React, { useState, useEffect, useMemo } from "react";
 import { Header } from "../components/Header";
+import { Footer } from "../components/Footer";
 import { BountyCard } from "../components/BountyCard";
 import { CreateBountyModal } from "../components/CreateBountyModal";
 import { SubmitPatchModal } from "../components/SubmitPatchModal";
 import { Bounty, INITIAL_BOUNTIES, getBountiesFromRPC } from "../lib/genlayer";
-import { Search, Filter, Shield, Cpu, ExternalLink, Sparkles, RefreshCw } from "lucide-react";
+import { Search, Shield, Cpu, ExternalLink, Sparkles } from "lucide-react";
 
 export default function Home() {
   const [account, setAccount] = useState<string | null>(null);
@@ -78,7 +79,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
-      {/* Navigation & Header */}
+      {/* 1. Header Section (Head) */}
       <Header
         account={account}
         setAccount={setAccount}
@@ -86,9 +87,9 @@ export default function Home() {
         bountyStats={bountyStats}
       />
 
-      {/* Main Content Area */}
+      {/* 2. Main Content Area (Body) */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Banner Section */}
+        {/* Hero Banner Section */}
         <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-indigo-950/80 via-slate-900 to-purple-950/80 border border-indigo-500/20 p-8 mb-10 shadow-2xl">
           <div className="relative z-10 max-w-3xl">
             <div className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 mb-4">
@@ -115,7 +116,7 @@ export default function Home() {
               <span>Chain ID: 61999</span>
               <span>•</span>
               <a
-                href="https://genlayer.com"
+                href="https://docs.genlayer.com"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center hover:text-indigo-400 transition-colors"
@@ -186,18 +187,8 @@ export default function Home() {
         )}
       </main>
 
-      {/* Footer */}
-      <footer className="border-t border-border bg-card/40 py-6 text-center text-xs text-slate-500">
-        <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div>© 2026 BugShield AI — Decentralized Security Audit Bounties on GenLayer</div>
-          <div className="flex items-center space-x-4">
-            <span className="inline-flex items-center text-cyan-400">
-              <span className="w-2 h-2 rounded-full bg-cyan-400 animate-ping mr-1.5" />
-              GenLayer Testnet Active
-            </span>
-          </div>
-        </div>
-      </footer>
+      {/* 3. Footer Section (Bot) */}
+      <Footer />
 
       {/* Modals */}
       <CreateBountyModal

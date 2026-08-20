@@ -12,7 +12,7 @@ export interface Bounty {
   vulnerability_description: string;
   expected_fix_criteria: string;
   reward_amount: string;
-  status: 0 | 1 | 2; // 0 = OPEN, 1 = RESOLVED, 2 = REJECTED/CANCELLED
+  status: 0 | 1 | 2; // 0 = OPEN, 1 = RESOLVED, 2 = REJECTED
   winner: string;
   ai_verdict_reason: string;
   patch_pr_url: string;
@@ -33,7 +33,7 @@ export const GENLAYER_TESTNET_CONFIG = {
 export const CONTRACT_ADDRESS =
   process.env.NEXT_PUBLIC_CONTRACT_ADDRESS || "0xBugShieldGenLayerTestnetAddress61999";
 
-// Seed bounties for immediate interactive preview & fallback
+// Seed bounties for immediate preview
 export const INITIAL_BOUNTIES: Bounty[] = [
   {
     id: 0,
@@ -83,9 +83,28 @@ export const INITIAL_BOUNTIES: Bounty[] = [
   },
 ];
 
+/**
+ * Check currently connected account without prompting popup
+ */
+export async function getConnectedAccount(): Promise<string | null> {
+  if (typeof window === "undefined" || !window.ethereum) return null;
+  try {
+    const accounts = (await window.ethereum.request({
+      method: "eth_accounts",
+    })) as string[];
+    return accounts && accounts.length > 0 ? accounts[0] : null;
+  } catch (err) {
+    console.error("Error fetching accounts:", err);
+    return null;
+  }
+}
+
+/**
+ * Connect wallet (Prompt user authorization & switch network to GenLayer Testnet)
+ */
 export async function connectWallet(): Promise<string | null> {
   if (typeof window === "undefined" || !window.ethereum) {
-    alert("MetaMask or a Web3 compatible browser extension was not detected.");
+    alert("MetaMask or a Web3 compatible wallet extension was not detected.");
     return null;
   }
 
@@ -94,7 +113,7 @@ export async function connectWallet(): Promise<string | null> {
       method: "eth_requestAccounts",
     })) as string[];
 
-    // Attempt network switch to GenLayer Testnet
+    // Switch network to GenLayer Testnet
     try {
       await window.ethereum.request({
         method: "wallet_switchEthereumChain",
@@ -117,7 +136,7 @@ export async function connectWallet(): Promise<string | null> {
 }
 
 /**
- * Fetch all bounties from GenLayer RPC or return active state list
+ * Fetch bounties state from GenLayer RPC
  */
 export async function getBountiesFromRPC(): Promise<Bounty[]> {
   try {
@@ -138,7 +157,7 @@ export async function getBountiesFromRPC(): Promise<Bounty[]> {
       return Object.values(data.result.bounties) as Bounty[];
     }
   } catch (err) {
-    console.warn("Could not fetch remote GenLayer RPC state. Using local/cached state.", err);
+    console.warn("Using local state fallback.", err);
   }
   return INITIAL_BOUNTIES;
 }

@@ -1,8 +1,8 @@
 "use client";
 
-import React from "react";
-import { ShieldCheck, Cpu, Wallet, ExternalLink, Sparkles } from "lucide-react";
-import { connectWallet } from "../lib/genlayer";
+import React, { useEffect } from "react";
+import { ShieldCheck, Cpu, Wallet, LogOut, Sparkles, CheckCircle, ExternalLink } from "lucide-react";
+import { connectWallet, getConnectedAccount, GENLAYER_TESTNET_CONFIG } from "../lib/genlayer";
 
 interface HeaderProps {
   account: string | null;
@@ -17,13 +17,42 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenCreateModal,
   bountyStats,
 }) => {
+
+  // Auto-detect existing wallet session & listen for account changes
+  useEffect(() => {
+    async function checkSession() {
+      const activeAccount = await getConnectedAccount();
+      if (activeAccount) setAccount(activeAccount);
+    }
+    checkSession();
+
+    if (typeof window !== "undefined" && window.ethereum) {
+      const handleAccountsChanged = (accounts: string[]) => {
+        if (accounts.length > 0) {
+          setAccount(accounts[0]);
+        } else {
+          setAccount(null); // User disconnected from extension
+        }
+      };
+
+      window.ethereum.on("accountsChanged", handleAccountsChanged);
+      return () => {
+        window.ethereum.removeListener("accountsChanged", handleAccountsChanged);
+      };
+    }
+  }, [setAccount]);
+
   const handleConnect = async () => {
     const acc = await connectWallet();
     if (acc) setAccount(acc);
   };
 
+  const handleDisconnect = () => {
+    setAccount(null);
+  };
+
   return (
-    <header className="border-b border-border bg-card/60 backdrop-blur-md sticky top-0 z-40">
+    <header className="border-b border-border bg-card/70 backdrop-blur-md sticky top-0 z-40">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-20">
           {/* Logo & Tagline */}
@@ -47,8 +76,8 @@ export const Header: React.FC<HeaderProps> = ({
             </div>
           </div>
 
-          {/* Action Buttons & Wallet Connection */}
-          <div className="flex items-center space-x-4">
+          {/* Action Buttons & Wallet Connect / Disconnect */}
+          <div className="flex items-center space-x-3">
             <button
               onClick={onOpenCreateModal}
               className="inline-flex items-center px-4 py-2.5 rounded-xl font-semibold text-sm bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white shadow-lg shadow-indigo-600/30 transition-all transform hover:-translate-y-0.5 active:translate-y-0"
@@ -57,19 +86,32 @@ export const Header: React.FC<HeaderProps> = ({
               Create Bug Bounty
             </button>
 
-            <button
-              onClick={handleConnect}
-              className="inline-flex items-center px-4 py-2.5 rounded-xl font-semibold text-sm border border-border bg-slate-900/80 hover:bg-slate-800/80 text-slate-200 hover:text-white transition-all shadow-inner"
-            >
-              <Wallet className="w-4 h-4 mr-2 text-indigo-400" />
-              {account ? (
-                <span>
-                  {account.slice(0, 6)}...{account.slice(-4)}
-                </span>
-              ) : (
-                "Connect Wallet"
-              )}
-            </button>
+            {account ? (
+              <div className="flex items-center space-x-2">
+                <div className="inline-flex items-center px-3.5 py-2 rounded-xl text-xs font-semibold border border-indigo-500/30 bg-indigo-950/40 text-indigo-300">
+                  <CheckCircle className="w-3.5 h-3.5 mr-1.5 text-emerald-400" />
+                  <span>
+                    {account.slice(0, 6)}...{account.slice(-4)}
+                  </span>
+                </div>
+                <button
+                  onClick={handleDisconnect}
+                  title="Disconnect Wallet / Đăng xuất ví"
+                  className="inline-flex items-center px-3 py-2 rounded-xl text-xs font-semibold border border-rose-500/30 bg-rose-950/30 text-rose-400 hover:bg-rose-900/50 hover:text-white transition-all shadow-inner"
+                >
+                  <LogOut className="w-3.5 h-3.5 mr-1" />
+                  Đăng xuất
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={handleConnect}
+                className="inline-flex items-center px-4 py-2.5 rounded-xl font-semibold text-sm border border-cyan-500/40 bg-slate-900/90 hover:bg-cyan-950/40 text-cyan-300 hover:text-cyan-200 transition-all shadow-inner"
+              >
+                <Wallet className="w-4 h-4 mr-2 text-cyan-400" />
+                Kết nối ví Web3
+              </button>
+            )}
           </div>
         </div>
 
