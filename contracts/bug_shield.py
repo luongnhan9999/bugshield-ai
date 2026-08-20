@@ -1,7 +1,7 @@
 import json
-from genlayer.std import *
+from genlayer import *
 
-class BugShield(Contract):
+class BugShield(gl.Contract):
     bounties: TreeMap[u256, dict]
     bounty_count: u256
 
