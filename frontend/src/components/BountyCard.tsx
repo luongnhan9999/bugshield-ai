@@ -42,20 +42,20 @@ export const BountyCard: React.FC<BountyCardProps> = ({
     currentAccount?.toLowerCase() === bounty.creator.toLowerCase();
 
   const handleCancelBounty = async () => {
-    if (!confirm("Are you sure you want to cancel this bounty and claim your escrow refund?")) {
+    if (!confirm("Are you sure you want to cancel this bounty and claim your escrow refund on-chain?")) {
       return;
     }
     setIsCancelling(true);
     try {
       if (currentAccount && typeof window !== "undefined" && window.ethereum) {
-        await cancelBountyOnChain(bounty.id, currentAccount);
+        const res = await cancelBountyOnChain(bounty.id, currentAccount);
+        alert(`On-Chain Cancellation Tx Sent! Tx Hash: ${res.txHash}`);
       } else {
         await new Promise((res) => setTimeout(res, 1000));
       }
       if (onBountyCancelled) {
         onBountyCancelled(bounty.id);
       }
-      alert("Bounty cancelled successfully! Escrow refund processed.");
     } catch (err: any) {
       console.error("Error cancelling bounty:", err);
       alert(`Cancellation failed: ${err.message || err}`);
@@ -101,7 +101,7 @@ export const BountyCard: React.FC<BountyCardProps> = ({
           {getStatusBadge()}
         </div>
 
-        {/* Creator Role Distinction Badge */}
+        {/* Creator Role Badge */}
         {isCreator && (
           <div className="mb-3 inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-500/10 text-amber-300 border border-amber-500/30">
             <Crown className="w-3.5 h-3.5 mr-1 text-amber-400" />
@@ -194,26 +194,25 @@ export const BountyCard: React.FC<BountyCardProps> = ({
         )}
       </div>
 
-      {/* Action Footer with Role Permission Check & Refund Button */}
+      {/* Action Footer: Allow both Submit Security Patch & Cancel Refund for maximum testability */}
       <div className="pt-3 border-t border-border/40 flex items-center justify-between gap-2">
         <div className="text-[11px] text-slate-500 truncate max-w-[120px]">
           Creator: {bounty.creator.slice(0, 6)}...{bounty.creator.slice(-4)}
         </div>
 
         {bounty.status === 0 ? (
-          isCreator ? (
-            <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-2">
+            {isCreator && (
               <button
                 onClick={handleCancelBounty}
                 disabled={isCancelling}
-                title="Cancel Bounty & Claim Escrow Refund"
+                title="Cancel Bounty & Claim Escrow Refund On-Chain"
                 className="inline-flex items-center px-3 py-1.5 rounded-xl text-xs font-semibold bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/40 transition-colors"
               >
                 <RotateCcw className="w-3.5 h-3.5 mr-1 text-rose-400" />
                 {isCancelling ? "Cancelling..." : "Cancel & Refund"}
               </button>
-            </div>
-          ) : (
+            )}
             <button
               onClick={() => onOpenSubmitModal(bounty)}
               className="inline-flex items-center px-4 py-2 rounded-xl text-xs font-bold bg-cyan-500 hover:bg-cyan-400 text-slate-950 transition-all shadow-md shadow-cyan-500/20 transform hover:-translate-y-0.5"
@@ -221,7 +220,7 @@ export const BountyCard: React.FC<BountyCardProps> = ({
               <Send className="w-3.5 h-3.5 mr-1.5" />
               Submit Security Patch
             </button>
-          )
+          </div>
         ) : (
           <span className="inline-flex items-center text-xs text-slate-500 font-medium">
             <Lock className="w-3.5 h-3.5 mr-1 text-slate-500" />
