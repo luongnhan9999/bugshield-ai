@@ -1,0 +1,6 @@
+{
+  "network": {
+    "rpcUrl": "https://testnet-rpc.genlayer.com",
+    "chainId": 61999
+  }
+}
