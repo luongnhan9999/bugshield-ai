@@ -1,4 +1,3 @@
-# { "Depends": "py-genlayer:1jb45aa8ynh2a9c9xn3b7qqh8sm5q93hwfp7jqmwsfhh8jpz09h6" }
 import json
 from genlayer.std import *
 
@@ -12,15 +11,6 @@ class SubmissionLog:
     is_valid: bool
     ai_verdict_reason: str
     timestamp: u256
-
-    def to_dict(self) -> dict:
-        return {
-            "hunter": str(self.hunter),
-            "patch_pr_url": self.patch_pr_url,
-            "is_valid": self.is_valid,
-            "ai_verdict_reason": self.ai_verdict_reason,
-            "timestamp": int(self.timestamp)
-        }
 
 
 @gl.serializable
@@ -39,26 +29,8 @@ class BountyData:
     created_at: u256
     submission_count: u256
 
-    def to_dict(self) -> dict:
-        return {
-            "id": int(self.id),
-            "creator": str(self.creator),
-            "title": self.title,
-            "target_repo_url": self.target_repo_url,
-            "vulnerability_description": self.vulnerability_description,
-            "expected_fix_criteria": self.expected_fix_criteria,
-            "reward_amount": str(self.reward_amount),
-            "status": int(self.status),
-            "winner": str(self.winner),
-            "ai_verdict_reason": self.ai_verdict_reason,
-            "patch_pr_url": self.patch_pr_url,
-            "created_at": int(self.created_at),
-            "submission_count": int(self.submission_count)
-        }
 
-
-@gl.contract
-class BugShield(gl.Contract):
+class BugShield(Contract):
     bounties: TreeMap[u256, BountyData]
     submission_logs: TreeMap[str, SubmissionLog]
     bounty_count: u256
@@ -111,7 +83,7 @@ class BugShield(gl.Contract):
         bounty_id: u256,
         patch_diff_or_code: str,
         pr_url: str,
-    ) -> dict:
+    ) -> bool:
         """
         Hunter nộp bản vá. GenLayer Validators thực thi AI Consensus
         để audit độc lập code patch trước khi quyết định giải ngân.
@@ -196,23 +168,14 @@ Format:
             if bounty.reward_amount > u256(0):
                 gl.transfer(hunter_address, bounty.reward_amount)
 
-            return {
-                "status": "APPROVED",
-                "submission_index": int(sub_index + u256(1)),
-                "reward_paid": str(bounty.reward_amount),
-                "reason": reason,
-            }
+            return True
         else:
             bounty.ai_verdict_reason = f"[Submission #{int(sub_index + u256(1))} Rejected] {reason}"
             self.bounties[bounty_id] = bounty
-            return {
-                "status": "REJECTED",
-                "submission_index": int(sub_index + u256(1)),
-                "reason": reason,
-            }
+            return False
 
     @gl.public.write
-    def cancel_bounty(self, bounty_id: u256) -> dict:
+    def cancel_bounty(self, bounty_id: u256) -> bool:
         """
         Cho phép Bounty Creator hủy bounty và hoàn tiền escrow (Refund)
         với cơ chế Time-Lock phòng chống Frontrunning Cancel của Creator.
@@ -245,19 +208,15 @@ Format:
         if bounty.reward_amount > u256(0):
             gl.transfer(bounty.creator, bounty.reward_amount)
 
-        return {
-            "status": "CANCELLED",
-            "refunded_to": str(bounty.creator),
-            "amount": str(bounty.reward_amount),
-        }
+        return True
 
     @gl.public.view
-    def get_bounty(self, bounty_id: u256) -> dict:
+    def get_bounty(self, bounty_id: u256) -> BountyData:
         """Lấy thông tin chi tiết của một bounty"""
         bounty = self.bounties.get(bounty_id)
         if not bounty:
             raise Exception("Bounty not found.")
-        return bounty.to_dict()
+        return bounty
 
     @gl.public.view
     def get_bounty_count(self) -> u256:
