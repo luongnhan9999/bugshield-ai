@@ -12,7 +12,7 @@ export interface Bounty {
   vulnerability_description: string;
   expected_fix_criteria: string;
   reward_amount: string;
-  status: 0 | 1 | 2; // 0 = OPEN, 1 = RESOLVED, 2 = REJECTED
+  status: 0 | 1 | 2; // 0 = OPEN, 1 = RESOLVED, 2 = CANCELLED
   winner: string;
   ai_verdict_reason: string;
   patch_pr_url: string;
@@ -151,20 +151,17 @@ export async function createBountyOnChain(
     throw new Error("No Web3 wallet provider available");
   }
 
-  // Parse comma or dot decimal numbers safely
   const parsedVal = parseFloat(rewardAmountGen.toString().replace(",", "."));
   const numVal = isNaN(parsedVal) ? 1.0 : parsedVal;
   const weiAmount = BigInt(Math.floor(numVal * 1e18));
   const hexValue = "0x" + weiAmount.toString(16);
 
-  // Encode payload
   const payload = {
     method: "create_bounty",
     args: [title, targetRepoUrl, vulnerabilityDescription, expectedFixCriteria],
   };
   const dataHex = "0x" + Buffer.from(JSON.stringify(payload)).toString("hex");
 
-  // Send real transaction prompt to user's wallet
   const txHash = (await window.ethereum.request({
     method: "eth_sendTransaction",
     params: [
@@ -213,7 +210,6 @@ export async function submitAndEvaluatePatchOnChain(
   };
   const dataHex = "0x" + Buffer.from(JSON.stringify(payload)).toString("hex");
 
-  // Send real transaction via wallet
   const txHash = (await window.ethereum.request({
     method: "eth_sendTransaction",
     params: [
@@ -226,7 +222,6 @@ export async function submitAndEvaluatePatchOnChain(
     ],
   })) as string;
 
-  // Determine heuristic for prompt response
   const codeLower = patchCode.toLowerCase();
   const isValid =
     codeLower.includes("modifier") ||
@@ -242,6 +237,38 @@ export async function submitAndEvaluatePatchOnChain(
     txHash,
     evalResult: { is_valid: isValid, reason },
   };
+}
+
+/**
+ * Send real on-chain transaction to cancel bounty & claim escrow refund
+ */
+export async function cancelBountyOnChain(
+  bountyId: number,
+  account: string
+): Promise<{ txHash: string }> {
+  if (typeof window === "undefined" || !window.ethereum) {
+    throw new Error("No Web3 wallet provider available");
+  }
+
+  const payload = {
+    method: "cancel_bounty",
+    args: [bountyId],
+  };
+  const dataHex = "0x" + Buffer.from(JSON.stringify(payload)).toString("hex");
+
+  const txHash = (await window.ethereum.request({
+    method: "eth_sendTransaction",
+    params: [
+      {
+        from: account,
+        to: CONTRACT_ADDRESS,
+        value: "0x0",
+        data: dataHex,
+      },
+    ],
+  })) as string;
+
+  return { txHash };
 }
 
 /**

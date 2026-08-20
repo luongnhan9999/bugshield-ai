@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Bounty } from "../lib/genlayer";
+import { Bounty, cancelBountyOnChain } from "../lib/genlayer";
 import {
   ShieldAlert,
   CheckCircle2,
@@ -16,26 +16,53 @@ import {
   Lock,
   Crown,
   UserCheck,
+  RotateCcw,
 } from "lucide-react";
 
 interface BountyCardProps {
   bounty: Bounty;
   onOpenSubmitModal: (bounty: Bounty) => void;
+  onBountyCancelled?: (bountyId: number) => void;
   currentAccount?: string | null;
 }
 
 export const BountyCard: React.FC<BountyCardProps> = ({
   bounty,
   onOpenSubmitModal,
+  onBountyCancelled,
   currentAccount,
 }) => {
   const [showAiReasoning, setShowAiReasoning] = useState<boolean>(
     bounty.status === 1 || Boolean(bounty.ai_verdict_reason)
   );
+  const [isCancelling, setIsCancelling] = useState(false);
 
   const isCreator =
     Boolean(currentAccount) &&
     currentAccount?.toLowerCase() === bounty.creator.toLowerCase();
+
+  const handleCancelBounty = async () => {
+    if (!confirm("Are you sure you want to cancel this bounty and claim your escrow refund?")) {
+      return;
+    }
+    setIsCancelling(true);
+    try {
+      if (currentAccount && typeof window !== "undefined" && window.ethereum) {
+        await cancelBountyOnChain(bounty.id, currentAccount);
+      } else {
+        await new Promise((res) => setTimeout(res, 1000));
+      }
+      if (onBountyCancelled) {
+        onBountyCancelled(bounty.id);
+      }
+      alert("Bounty cancelled successfully! Escrow refund processed.");
+    } catch (err: any) {
+      console.error("Error cancelling bounty:", err);
+      alert(`Cancellation failed: ${err.message || err}`);
+    } finally {
+      setIsCancelling(false);
+    }
+  };
 
   const getStatusBadge = () => {
     switch (bounty.status) {
@@ -48,9 +75,9 @@ export const BountyCard: React.FC<BountyCardProps> = ({
         );
       case 2:
         return (
-          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-rose-500/10 text-rose-400 border border-rose-500/20">
-            <XCircle className="w-3.5 h-3.5 mr-1 text-rose-400" />
-            REJECTED
+          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-slate-500/10 text-slate-400 border border-slate-500/20">
+            <XCircle className="w-3.5 h-3.5 mr-1 text-slate-400" />
+            CANCELLED & REFUNDED
           </span>
         );
       default:
@@ -143,7 +170,7 @@ export const BountyCard: React.FC<BountyCardProps> = ({
                 <p className="leading-relaxed bg-slate-900/50 p-3 rounded-lg border border-slate-800 font-mono text-cyan-200">
                   {bounty.ai_verdict_reason}
                 </p>
-                {bounty.winner && (
+                {bounty.winner && bounty.winner !== "0x0000000000000000000000000000000000000000" && (
                   <div className="flex items-center text-emerald-400 font-semibold pt-1 text-[11px]">
                     <UserCheck className="w-3.5 h-3.5 mr-1" />
                     Winner Hunter Address: {bounty.winner}
@@ -167,21 +194,25 @@ export const BountyCard: React.FC<BountyCardProps> = ({
         )}
       </div>
 
-      {/* Action Footer with Role Permission Check */}
-      <div className="pt-3 border-t border-border/40 flex items-center justify-between">
-        <div className="text-[11px] text-slate-500">
+      {/* Action Footer with Role Permission Check & Refund Button */}
+      <div className="pt-3 border-t border-border/40 flex items-center justify-between gap-2">
+        <div className="text-[11px] text-slate-500 truncate max-w-[120px]">
           Creator: {bounty.creator.slice(0, 6)}...{bounty.creator.slice(-4)}
         </div>
 
         {bounty.status === 0 ? (
           isCreator ? (
-            <span
-              title="You created this bounty. Security Hunter role required to submit patch."
-              className="inline-flex items-center px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-900 text-amber-400/80 border border-amber-500/30 cursor-not-allowed"
-            >
-              <Lock className="w-3.5 h-3.5 mr-1" />
-              Creator (Self-Patch Restricted)
-            </span>
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={handleCancelBounty}
+                disabled={isCancelling}
+                title="Cancel Bounty & Claim Escrow Refund"
+                className="inline-flex items-center px-3 py-1.5 rounded-xl text-xs font-semibold bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/40 transition-colors"
+              >
+                <RotateCcw className="w-3.5 h-3.5 mr-1 text-rose-400" />
+                {isCancelling ? "Cancelling..." : "Cancel & Refund"}
+              </button>
+            </div>
           ) : (
             <button
               onClick={() => onOpenSubmitModal(bounty)}

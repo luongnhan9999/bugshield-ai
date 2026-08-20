@@ -7,7 +7,7 @@ import { BountyCard } from "../components/BountyCard";
 import { CreateBountyModal } from "../components/CreateBountyModal";
 import { SubmitPatchModal } from "../components/SubmitPatchModal";
 import { Bounty, INITIAL_BOUNTIES, getBountiesFromRPC } from "../lib/genlayer";
-import { Search, Shield, Cpu, ExternalLink, Sparkles, Crown, UserCheck, Zap } from "lucide-react";
+import { Search, Shield, Cpu, ExternalLink, Sparkles, Crown, Zap } from "lucide-react";
 
 export default function Home() {
   const [account, setAccount] = useState<string | null>(null);
@@ -69,6 +69,16 @@ export default function Home() {
   const handlePatchEvaluated = (bountyId: number, updatedBounty: Bounty) => {
     setBounties((prev) =>
       prev.map((b) => (b.id === bountyId ? updatedBounty : b))
+    );
+  };
+
+  const handleBountyCancelled = (bountyId: number) => {
+    setBounties((prev) =>
+      prev.map((b) =>
+        b.id === bountyId
+          ? { ...b, status: 2, ai_verdict_reason: "Bounty cancelled by creator. Escrow refunded." }
+          : b
+      )
     );
   };
 
@@ -136,12 +146,12 @@ export default function Home() {
             <div>
               <div className="font-bold text-white text-sm flex items-center gap-2">
                 <span>On-Chain Role Delegation:</span>
-                <span className="text-amber-300 font-normal">👑 Bounty Creator (Escrow Lock)</span>
+                <span className="text-amber-300 font-normal">👑 Bounty Creator (Escrow Lock & Refund)</span>
                 <span>vs</span>
                 <span className="text-cyan-400 font-normal">⚔️ Security Hunter (Patch Auditor)</span>
               </div>
               <p className="text-slate-400 text-xs mt-0.5">
-                Bounty Creators lock escrow rewards. Security Hunters submit patch diffs for automated Validator AI audit.
+                Bounty Creators lock escrow rewards & can claim refunds. Security Hunters submit patch diffs for automated Validator AI audit.
               </p>
             </div>
           </div>
@@ -197,6 +207,7 @@ export default function Home() {
                 key={bounty.id}
                 bounty={bounty}
                 onOpenSubmitModal={handleOpenSubmitModal}
+                onBountyCancelled={handleBountyCancelled}
                 currentAccount={account}
               />
             ))}
